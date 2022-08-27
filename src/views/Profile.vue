@@ -1,6 +1,6 @@
 <template>
 <section class="vh-100">
-  <div class="container py-5 h-100">
+  <div class="container py-5 h-100" v-if="token !== 'null' && token != null">
     <div class="row d-flex justify-content-center align-items-center h-100">
       <div class="col col-lg-6 mb-4 mb-lg-0">
         <div class="card mb-3" style="border-radius: .5rem;">
@@ -17,12 +17,18 @@
               <div class="card-body p-4">
                 <div class="row pt-1">
                   <div class="col-6 mb-3">
-                    <h6 class="fw-bold">Email</h6>
-                    <p class="text-muted">oni@gmail.com</p>
+                    <h6 class="fw-bold">Username</h6>
+                    <p class="text-muted">{{ userdetails.data.username }}</p>
                   </div>
                   <div class="col-6 mb-3">
-                    <h6 class="fw-bold">Phone</h6>
-                    <p class="text-muted">123 456 789</p>
+                    <h6 class="fw-bold">Email</h6>
+                    <p class="text-muted">{{ userdetails.data.emailAddress }}</p>
+                  </div>
+                </div>
+                <div class="row pt-1">
+                  <div class="col-6 mb-3">
+                    <h6 class="fw-bold">Full Name</h6>
+                    <p class="text-muted">{{ username }}</p>
                   </div>
                 </div>
                 <h6 class="fw-bold">Friends</h6>
@@ -40,7 +46,7 @@
       </div>
     </div>
   </div>
-  <!-- Show when user is not found
+  <!-- Show when user is not found -->
 
   <span v-if="token === 'null' || token == null" >
     <h1 class="display-3" style="margin-top:20vh">You must be signed in to display the posts!</h1>
@@ -49,19 +55,46 @@
     <router-link :to="'/login'"> 
       <button type="button" class="btn btn-success btn-lg fw-bold">Sign in</button>
     </router-link>
-  </span> -->
+  </span>
 </section>
 </template>
 <script>
+import axios from 'axios'
+import { URL_OF_API } from "../api/url.js"
+
 export default {
-    created(){
-        this.token = localStorage.getItem("bearer_token")
-        document.body.style.backgroundColor = "rgb(129, 255, 192)";
+   async created(){
+      axios.defaults.headers.common['Authorization'] = `Bearer ${localStorage.getItem('bearer_token')}`
+      await this.getUserProfile()
+      this.token = localStorage.getItem("bearer_token")
+      this.username = localStorage.getItem("username")
+      document.body.style.backgroundColor = "rgb(129, 255, 192)";
     },
     data(){
       return {
         token:null,
+        username:'',
+        userdetails: [],
       }
     },
+
+    methods : {
+      async getUserProfile () {
+        try {
+          const url = URL_OF_API
+          await axios.get(url + 'user/6',
+            {
+              headers: {'Content-type': 'application/json'}
+            }
+          ).then(response => {
+            this.userdetails = response
+          })
+
+          console.log('this userdetails = ', this.userdetails)
+        } catch (err) {
+          console.log(err)
+        }
+      },
+      },
 }
 </script>

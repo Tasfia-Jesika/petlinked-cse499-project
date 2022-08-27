@@ -1,6 +1,6 @@
 <template>
    <div id="app">
-    <div class="row p-3 mt-4">
+    <div class="row p-3 mt-4" v-if="token !== 'null' && token != null">
       <div class="col-3">
         <div class="card mt-5">
           <div class="card-body">
@@ -18,13 +18,63 @@
         </div>
       </div>
       <div class="col-6">
-        <div class="card mt-5" v-for="p in posts" :key="p.id">
+        <div class="card mt-5">
           <div class="card-body">
-            <h5 class="text-start fw-bold">{{p.userName}}</h5>
-            <p class="text-start fw-normal fs-6">{{p.postBody}}</p>
+            <h5 class="text-start fw-bold" style="margin-bottom: 5vh;">Post Blog</h5>
+            <input v-model="blogText" type="text" class="form-control" placeholder="Enter Text" aria-label="input box">
+            <button class="btn btn-success" style="float:left; margin-top:2vh" @click="postBlog()" :disabled="!blogText">POST</button>
+          </div>
+        </div>
+        <div class="card mt-5" v-for="p in postAll" :key="p.id">
+          <div class="card-body">
+            <h5 class="text-start fw-bold">{{ username }}</h5>
+            <p class="text-start fw-normal fs-6">{{p.post}}</p>
             <div class="btn-group" style="float:left;" role="group" aria-label="Basic outlined example">
               <button type="button" class="btn btn-outline-primary">Like</button>
-              <button type="button" class="btn btn-outline-primary">Comment</button>
+              <button type="button" class="btn btn-outline-primary" @click="commentshow(p.id)">Comment</button>
+              <button type="button" class="btn btn-outline-primary" @click="commentpostshow(p.id)">Comment Post</button>
+            </div>
+            <br>
+            <br>
+            <div class="card mt-1 p-2" v-if="revealCommentPost">
+              <div class="card-body">
+                <input v-model="comment" type="text" class="form-control" placeholder="Enter Comment" aria-label="input box">
+                <button class="btn btn-success" style="float:left; margin-top:2vh" @click="commentpost(p.id)" :disabled="!comment">COMMENT</button>
+              </div>
+            </div>
+
+            <div v-if="revealComment">
+              <div class="card mt-1 p-2" v-for="c in comments" :key="c.id" style="border:none;">  
+                <div class="card-body" v-if="p.id === c.postId">
+                  <div class="card-title" 
+                    style="font-size:11px; 
+                          float:left; 
+                          font-weight:bold;
+                          color:#fff;
+                          background-color:green;
+                          border-radius: 5px;
+                          width:10vw;
+                          height:2vw;
+                          padding:0.5vw;
+                          "
+                  > 
+                     {{ c.fullName }}
+                  
+                  
+                  </div>
+                  <div class="card-text text-start"
+                    style=" background-color:#e3e4e6;
+                            border-radius: 5px;
+                            color:#000;
+                            margin-top:6%;
+                            padding:3%;
+
+                    "
+                  > 
+                    {{ c.comment }}
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -41,7 +91,7 @@
       </div>
     </div>
       
-      <!-- Show when user is not found
+      <!-- Show when user is not found -->
 
       <span v-if="token === 'null' || token == null" >
         <h1 class="display-3" style="margin-top:20vh">You must be signed in to display the posts!</h1>
@@ -50,19 +100,36 @@
         <router-link :to="'/login'"> 
           <button type="button" class="btn btn-success btn-lg fw-bold">Sign in</button>
         </router-link>
-      </span> -->
+      </span>
    </div>
 </template>
 <script>
+import axios from 'axios'
+import { URL_OF_API } from "../api/url.js"
+
 export default {
-  name: "Home",
-  created() {
+name: "Home",
+ async created() {
     this.token = localStorage.getItem("bearer_token")
+    this.username = localStorage.getItem("username")
+    axios.defaults.headers.common['Authorization'] = `Bearer ${localStorage.getItem('bearer_token')}`
+    console.log(this.token);
     document.body.style.backgroundColor = "rgb(129, 255, 192)";
+
+   await this.getPostList()
   },
   data() {
     return {
+        blogText:null,
+        postAll:[],
+        userId: 6,
         token:null,
+        username:'',
+        postId: null,
+        comments:[],
+        comment:null,
+        revealComment:false,
+        revealCommentPost: false,
         friendsList: [
             {
             'userName' : 'Siam' 
@@ -84,33 +151,6 @@ export default {
             'userName' : 'Abdal' 
             },
         ],
-
-      posts: [
-        {
-          'userName': 'Siam',
-          'postBody': 'Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry\'s standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.',
-        },
-                {
-          'userName': 'Adomji',
-          'postBody': 'Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry\'s standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.',
-        },
-                {
-          'userName': 'Oni',
-          'postBody': 'Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry\'s standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.',
-        },
-                {
-          'userName': 'Sadman',
-          'postBody': 'Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry\'s standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.',
-        },
-                {
-          'userName': 'Tasfia',
-          'postBody': 'Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry\'s standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.',
-        },
-                {
-          'userName': 'Adbal',
-          'postBody': 'Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry\'s standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.',
-        },
-      ], 
       news: [
         {
           'newsTitle':'These Robo-Fish Could Help Save the Oceans from Microplastic Scientists have created tiny robots that can ‘swim’ around oceans and seas while absorbing microplastics',
@@ -144,6 +184,96 @@ export default {
         },
       ],
     }
+  },
+
+  methods : {
+    async commentpostshow(postId){
+      if (this.revealCommentPost == true) {
+          this.revealCommentPost = false
+          this.postId = null
+        } else {
+          this.revealCommentPost = true
+          this.postId = postId
+        }
+    },
+    async commentshow (postId) {
+        if (this.revealComment == true) {
+          this.revealComment = false
+        } else {
+          this.revealComment = true
+        }
+      try {
+        const url = URL_OF_API
+        await axios.get(url + postId +'/comment/list',
+          {
+            headers: {'Content-type': 'application/json'}
+          }
+        ).then(response => {
+          this.comments = response.data.data
+        })
+
+        console.log('this is the comments = ', this.comments)
+       
+
+      } catch (err) {
+        console.log(err)
+      }
+    },
+    async commentpost (postId) {
+      try {
+        if (this.comment) {
+        const url = URL_OF_API
+        await axios.post(url + postId +'/comment/add',
+          {
+            comment: this.comment
+          }
+        ).then(response => {
+           console.log(response)
+        })
+
+       await this.commentshow(postId)
+        }
+
+
+
+      } catch (err) {
+        console.log(err)
+      }
+    },
+    async getPostList () {
+      try {
+        const url = URL_OF_API
+        await axios.get(url + 'post/list',
+          {
+            headers: {'Content-type': 'application/json'}
+          }
+        ).then(response => {
+          this.postAll = response.data.data
+        })
+
+        console.log('this is the posts by user 6 = ', this.postAll)
+      } catch (err) {
+        console.log(err)
+      }
+    },
+
+    async postBlog () {
+      try {
+        const url = URL_OF_API
+        await axios.post(url + 'post/create',
+          {
+            post: this.blogText
+          }
+        ).then(response => {
+          console.log(response)
+        })
+
+        await this.getPostList()
+
+      } catch (err) {
+        console.log(err)
+      }
+    },
   },
 };
 </script>
